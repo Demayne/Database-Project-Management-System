@@ -1,5 +1,6 @@
 import java.sql.*;
 import java.util.Scanner;
+import util.LoggerUtil;
 
 /**
  * The Main class serves as the entry point for the PoiseDMS project management system.
@@ -10,7 +11,7 @@ import java.util.Scanner;
  * and executes the corresponding actions based on user input.</p>
  * 
  * @author Demayne Govender
- * @version 1.0
+ * @version 2.0
  */
 public class Main {
 
@@ -21,13 +22,26 @@ public class Main {
    * @param args Command-line arguments (not used in this application)
    */
   public static void main(String[] args) {
+    LoggerUtil.info("PoiseDMS application started");
+    // Graceful shutdown hook to ensure pool closes even on abrupt termination
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      LoggerUtil.info("Shutdown hook triggered: closing database pool");
+      DatabaseConnection.closePool();
+    }));
     Scanner scanner = new Scanner(System.in); // Scanner resource initialization
     ProjectManager projectManager = new ProjectManager(); // Initialize ProjectManager instance
 
+    // Display welcome message
+    displayWelcomeBanner();
+    
     try (Connection connection = DatabaseConnection.getConnection()) {
+      LoggerUtil.info("Database connection established successfully");
+      
       while (true) {
         // Display options to the user
-        System.out.println("Please choose an option:");
+        System.out.println("\n" + "=".repeat(50));
+        System.out.println("PoiseDMS - Please choose an option:");
+        System.out.println("=".repeat(50));
         System.out.println("1. View all projects");
         System.out.println("2. View incomplete projects");
         System.out.println("3. View overdue projects");
@@ -37,9 +51,19 @@ public class Main {
         System.out.println("7. Delete a project");
         System.out.println("8. Finalize a project");
         System.out.println("9. Exit");
+        System.out.println("=".repeat(50));
+        System.out.print("Enter your choice: ");
 
-        int choice = scanner.nextInt();
-        scanner.nextLine(); // Consume newline left-over
+        int choice;
+        try {
+          choice = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException ex) {
+          System.out.println("❌ Invalid input. Please enter a number between 1 and 9.");
+          LoggerUtil.warning("Non-numeric menu input received");
+          continue; // restart loop
+        }
+        
+        LoggerUtil.info("User selected menu option: " + choice);
 
         switch (choice) {
           case 1:
@@ -99,19 +123,44 @@ public class Main {
             break;
 
           case 9:
-            System.out.println("Exiting...");
+            System.out.println("\n" + "=".repeat(50));
+            System.out.println("Thank you for using PoiseDMS!");
+            System.out.println("Closing database connections...");
+            DatabaseConnection.closePool();
+            System.out.println("Application terminated successfully.");
+            System.out.println("=".repeat(50));
+            LoggerUtil.info("PoiseDMS application terminated by user");
             return;
 
           default:
-            System.out.println("❌ Invalid choice. Please try again.");
+            System.out.println("❌ Invalid choice. Please enter a number between 1 and 9.");
+            LoggerUtil.warning("Out-of-range menu choice entered: " + choice);
         }
       }
     } catch (SQLException e) {
+      LoggerUtil.error("Database error occurred", e);
+      System.err.println("❌ Database error: " + e.getMessage());
+      e.printStackTrace();
+    } catch (Exception e) {
+      LoggerUtil.error("Unexpected error occurred", e);
+      System.err.println("❌ Unexpected error: " + e.getMessage());
       e.printStackTrace();
     } finally {
       // Closes the scanner to avoid resource leak
       scanner.close();
+      LoggerUtil.info("Scanner resources released");
     }
+  }
+  
+  /**
+   * Displays welcome banner for the application.
+   */
+  private static void displayWelcomeBanner() {
+    System.out.println("\n" + "=".repeat(60));
+    System.out.println(" ".repeat(10) + "POISE DATABASE MANAGEMENT SYSTEM");
+    System.out.println(" ".repeat(12) + "Project Management Solution v2.0");
+    System.out.println(" ".repeat(18) + "by Demayne Govender");
+    System.out.println("=".repeat(60) + "\n");
   }
 
   /**
