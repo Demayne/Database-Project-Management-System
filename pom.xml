@@ -190,6 +190,9 @@
                     <show>public</show>
                     <nohelp>true</nohelp>
                     <outputDirectory>${project.basedir}/docs</outputDirectory>
+                    <doclint>none</doclint>
+                    <failOnError>false</failOnError>
+                    <source>11</source>
                 </configuration>
             </plugin>
 
