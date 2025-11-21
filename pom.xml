@@ -61,10 +61,16 @@
             <version>1.4.11</version>
         </dependency>
 
-        <!-- JUnit 5 for Testing -->
+        <!-- JUnit 5 API and Engine for Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
@@ -87,6 +93,7 @@
 
     <build>
         <sourceDirectory>src</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
         <resources>
             <resource>
                 <directory>src/config</directory>
@@ -105,7 +112,24 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <excludes>
+                        <exclude>**/test/**</exclude>
+                    </excludes>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <testSource>11</testSource>
+                            <testTarget>11</testTarget>
+                            <excludes combine.self="override"/>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- Maven JAR Plugin -->

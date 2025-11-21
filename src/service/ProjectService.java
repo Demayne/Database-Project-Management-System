@@ -30,8 +30,12 @@ public class ProjectService {
             throw new ValidationException("Project cannot be null");
         }
         
-        if (project.getProjectNumber() <= 0) {
-            throw new ValidationException("Project number must be positive");
+        String projectNumber = project.getProjectNumber();
+        if (projectNumber == null || projectNumber.trim().isEmpty()) {
+            throw new ValidationException("Project number is required");
+        }
+        if (!ValidationUtil.isNumeric(projectNumber)) {
+            throw new ValidationException("Project number must be numeric");
         }
         
         if (project.getTotalFee() < 0) {
@@ -74,7 +78,7 @@ public class ProjectService {
             }
         } catch (SQLException e) {
             LoggerUtil.error("Database error checking project existence", e);
-            throw new DatabaseException("Failed to check project existence", e, "PDMS-DB-001");
+            throw new DatabaseException("Failed to check project existence", e);
         }
         
         return false;
@@ -101,7 +105,7 @@ public class ProjectService {
             LoggerUtil.info("Retrieved " + projects.size() + " overdue projects");
         } catch (SQLException e) {
             LoggerUtil.error("Failed to retrieve overdue projects", e);
-            throw new DatabaseException("Failed to retrieve overdue projects", e, "PDMS-DB-002");
+            throw new DatabaseException("Failed to retrieve overdue projects", e);
         }
         
         return projects;
@@ -116,14 +120,17 @@ public class ProjectService {
      */
     private Project mapResultSetToProject(ResultSet rs) throws SQLException {
         Project project = new Project();
-        project.setProjectNumber(rs.getInt("ProjectNumber"));
+        project.setProjectNumber(String.valueOf(rs.getInt("ProjectNumber")));
         project.setProjectName(rs.getString("ProjectName"));
         project.setBuildingType(rs.getString("BuildingType"));
         project.setPhysicalAddress(rs.getString("PhysicalAddress"));
         project.setErfNumber(rs.getString("ERFNumber"));
         project.setTotalFee(rs.getDouble("TotalFee"));
         project.setTotalPaid(rs.getDouble("TotalPaid"));
-        project.setDeadline(rs.getDate("Deadline"));
+        Date date = rs.getDate("Deadline");
+        if (date != null) {
+            project.setDeadline(date.toLocalDate());
+        }
         project.setFinalised(rs.getString("Finalised"));
         return project;
     }
